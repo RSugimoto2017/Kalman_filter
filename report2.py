@@ -2,14 +2,14 @@ import numpy as numpy
 
 
 # Z~(k+1|k)
-def calc_Ztildekp1(zkp1, akp1, xhat):
+def calculate_Ztildekp1(zkp1, akp1, xhat):
     temp = numpy.dot(akp1, xhat)
     Ztildekp1 = zkp1 - temp
     return Ztildekp1
 
 
 # S(k+1)
-def calc_Skp1(akp1, Pk, Rkp1):
+def calculate_Skp1(akp1, Pk, Rkp1):
     Skp1 = numpy.dot(akp1, Pk)
     Skp1 = numpy.dot(Skp1, akp1.T)
     Skp1 = Skp1 + Rkp1
@@ -17,14 +17,14 @@ def calc_Skp1(akp1, Pk, Rkp1):
 
 
 # W(k+1)
-def calc_Wkp1(Pk, akp1, Skp1):
+def calculate_Wkp1(Pk, akp1, Skp1):
     Wkp1 = numpy.dot(Pk, akp1.T)
     Wkp1 = numpy.dot(Wkp1, numpy.linalg.inv(Skp1))
     return Wkp1
 
 
 # P(k|k)
-def calc_Pkp1(Pk, Wkp1, Skp1):
+def calculate_Pkp1(Pk, Wkp1, Skp1):
     temp = numpy.dot(Wkp1, Skp1)
     temp = numpy.dot(temp, Wkp1.T)
     Pkp1 = Pk - temp
@@ -32,13 +32,13 @@ def calc_Pkp1(Pk, Wkp1, Skp1):
 
 
 # P(k+1|k)
-def calc_Pk2(Pk, Qkp1):
+def calculate_Pk2(Pk, Qkp1):
     Pkp1 = Pk - Qkp1
     return Pkp1
 
 
 # x^(k+1|k+1)
-def calc_xhatkp1(xhat, Wkp1, Ztildekp1):
+def calculate_xhatkp1(xhat, Wkp1, Ztildekp1):
     temp = numpy.dot(Wkp1, Ztildekp1)
     xhatkp1 = xhat + temp
     return xhatkp1
@@ -78,12 +78,12 @@ def KalmanFiltering(xhat_init, Pk_init, Z, A, R):
         akp1 = get_akp1(A, k)
         Rkp1 = get_Rkp1(R, k)
 
-        Ztildekp1 = calc_Ztildekp1(zkp1, akp1, xhat)
-        Skp1 = calc_Skp1(akp1, Pk, Rkp1)
-        Wkp1 = calc_Wkp1(Pk, akp1, Skp1)
-        Pk = calc_Pkp1(Pk, Wkp1, Skp1)
-        Pk = calc_Pk2(Pk, Qk)
-        xhat = calc_xhatkp1(xhat, Wkp1, Ztildekp1)
+        Ztildekp1 = calculate_Ztildekp1(zkp1, akp1, xhat)
+        Skp1 = calculate_Skp1(akp1, Pk, Rkp1)
+        Wkp1 = calculate_Wkp1(Pk, akp1, Skp1)
+        Pk = calculate_Pkp1(Pk, Wkp1, Skp1)
+        Pk = calculate_Pk2(Pk, Qk)
+        xhat = calculate_xhatkp1(xhat, Wkp1, Ztildekp1)
 
         print('観測予測誤差Z~(', k+1, ') =', Ztildekp1)
         print('観測予測誤差共分散S(', k+1, ') =', Skp1)
