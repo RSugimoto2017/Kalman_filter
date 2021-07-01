@@ -1,4 +1,5 @@
-import numpy as numpy
+# -*- coding:UTF-8 -*-
+import numpy
 
 
 # Z~(k+1|k)
@@ -32,9 +33,9 @@ def calculate_Pkp1(Pk, Wkp1, Skp1):
 
 
 # P(k+1|k)
-def calculate_Pk2(Pk, Qkp1):
-    Pkp1 = Pk - Qkp1
-    return Pkp1
+def calculate_Pkp2(Pk, Q):
+    Pkp2 = Pk + Q
+    return Pkp2
 
 
 # x^(k+1|k+1)
@@ -44,19 +45,19 @@ def calculate_xhatkp1(xhat, Wkp1, Ztildekp1):
     return xhatkp1
 
 
-# 観測値z(k+1)（array）
+# 観測値行列z(k+1)
 def get_zkp1(Z, k):
     zkp1 = [Z[(k+1)+15]]
     return numpy.array(zkp1)
 
 
-# a(k+1)（array）
+# 行列a(k+1)
 def get_akp1(A, k):
     akp1 = [A[(k+1)+15]]
     return numpy.array(akp1)
 
 
-# 雑音の共分散R(k+1)（array）
+# 雑音の共分散行列R(k+1)
 def get_Rkp1(R, k):
     Rkp1 = [R[(k+1)+15][(k+1)+15]]
     return numpy.array(Rkp1)
@@ -67,11 +68,10 @@ def KalmanFiltering(xhat_init, Pk_init, Z, A, R):
     # init -> k=-16のときの初期値
     xhat = xhat_init
     Pk = Pk_init
-    Qk = Qk_init
+    Q = Q_init
 
-    print('推定値の初期値xhat(-16) =', xhat)
-    print('推定誤差共分散の初期値P(-16) =\n', Pk)
-    print('プラント雑音共分散の初期値Q(-16) =\n', Qk)
+    print('推定値誤差の初期共分散P =\n', Pk)
+    print('プラント雑音の共分散Q =\n', Q)
 
     for k in range(-16, 15):
         zkp1 = get_zkp1(Z, k)
@@ -82,29 +82,29 @@ def KalmanFiltering(xhat_init, Pk_init, Z, A, R):
         Skp1 = calculate_Skp1(akp1, Pk, Rkp1)
         Wkp1 = calculate_Wkp1(Pk, akp1, Skp1)
         Pk = calculate_Pkp1(Pk, Wkp1, Skp1)
-        Pk = calculate_Pk2(Pk, Qk)
+        # print('推定値誤差の共分散P(', k+1, ') =\n', Pk)
+        Pk = calculate_Pkp2(Pk, Q)
+        # print('予測誤差の共分散P(', k+1, '|', k, ') =\n', Pk)
         xhat = calculate_xhatkp1(xhat, Wkp1, Ztildekp1)
 
-        print('観測予測誤差Z~(', k+1, ') =', Ztildekp1)
-        print('観測予測誤差共分散S(', k+1, ') =', Skp1)
-        print('フィルタゲインW(', k+1, ') =\n', Wkp1)
-        print('推定誤差共分散P(', k+1, ') =\n', Pk)
-        print('予測誤差共分散P(', k+1, '|', k, ') =\n', Pk)
         print('推定値x^(', k+1, ') =', xhat)
+        # print(xhat[0])
+        # print(xhat[1])
+        # print(xhat[2])
 
 
 # メイン
 if __name__ == '__main__':
 
     # 必要な行列の用意
-    #観測回数k(31*1) -15 <- k <- 15
+    # 観測回数k
     k = numpy.arange(-15, 16)
 
-    # 観測値Z(31*1)
+    # 観測値Z
     Z = numpy.array([162.1746, 139.5805, 113.8133, 94.3372, 74.7258, 59.3817, 41.4117, 26.5951, 20.1832, 8.8816, 1.8636, -5.0213, -5.8861, -5.7711, -4.9332, -
                      1.9845, 2.0593, 12.3849, 17.9044, 30.1826, 41.1677, 55.7128, 74.2944, 93.7607, 112.6638, 134.9818, 162.7143, 188.9610, 219.6236, 248.9036, 281.3082])
 
-    # 係数行列A(31*3)
+    # 係数行列A
     A = numpy.zeros((31, 3))
     for i in range(31):
         for j in range(3):
@@ -121,30 +121,27 @@ if __name__ == '__main__':
         for j in range(31):
             # 対角成分
             if j == i:
-                # kが奇数の場合
+                # kが奇数の場合のセンサノイズ
                 if k[i] % 2 != 0:
                     R[i][j] = 1.0
-                # kが偶数の場合
+                # kが偶数の場合センサノイズ
                 else:
                     R[i][j] = 4.0
             # 非対角成分
             else:
                 R[i][j] = 0
 
-    # 推定値xhatの初期値(3*1)
+    # 推定値xhatの初期値
     xhat_init = numpy.zeros(3)
-
-    # 推定誤差共分散行列Pの初期値(3*3)
+    # 推定値誤差の初期共分散行列P
     Pk_init = numpy.zeros((3, 3))
+    # プラント雑音の共分散行列Q
+    Q_init = numpy.zeros((3, 3))
 
-    # 対角成分を初期値を10^6にする（変更すると推定精度が変わる）
+    # 対角成分の初期値を設定(推定値誤差の初期共分散)
     numpy.fill_diagonal(Pk_init, 1000000)
-
-    # プラント雑音共分散行列qの初期値(3*3)
-    Qk_init = numpy.zeros((3, 3))
-
-    # 対角成分を初期値を10^6にする（変更すると推定精度が変わる）
-    numpy.fill_diagonal(Qk_init, 0)
+    # 対角成分の初期値を設定(プラント雑音の共分散)
+    numpy.fill_diagonal(Q_init, 0.001)
 
     print('Kalman Filtering')
     KalmanFiltering(xhat_init, Pk_init, Z, A, R)
